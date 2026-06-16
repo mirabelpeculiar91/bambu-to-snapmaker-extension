@@ -30,6 +30,14 @@ The extension injects a **Snapmaker U1** tile into the printer filter carousel o
 
 *The converted file is named after the original model with a `-U1.3mf` suffix.*
 
+## First Use
+
+The first time you click **Convert to Snapmaker U1**, your browser will show this prompt:
+
+![Browser prompt asking to allow makerworld.com to access other apps](screenshots/allow-access.png)
+
+This is the browser asking permission for MakerWorld to open Bambu Studio via its `bambu-studio://` protocol. Click **Allow** — the extension intercepts the file during this process, so Bambu Studio won't actually open and the converted `.3mf` will download instead. You should only see this prompt once per browser session.
+
 ## Prerequisites
 
 **The local conversion service must be running before you click Convert.**
