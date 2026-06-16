@@ -299,11 +299,16 @@ const SVG_ERROR   = `<svg class="convert-button__icon-error" viewBox="0 0 24 24"
     const btn = findButton();
     if (!btn) throw new Error('Primary button not found');
 
+    // Click the dropdown arrow (▼ sibling) to open the menu rather than the main
+    // button area, which triggers bambu-studio:// in some browsers instead of the fetch.
+    const arrow = btn.nextElementSibling || btn.parentElement?.querySelector(':scope > :not(.primaryButton)');
+    const clickTarget = arrow || btn;
+
     _bypassInterceptor = true;
-    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+    clickTarget.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
     _bypassInterceptor = false;
 
-    const item = await poll(findVisibleDownloadItem, 2500);
+    const item = await poll(findVisibleDownloadItem, 5000);
     if (!item) throw new Error('Download 3MF option not found — select a print profile first');
     console.log('[U1 Extension] clicking:', item.textContent.trim().slice(0, 40));
     item.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
