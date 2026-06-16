@@ -295,13 +295,35 @@ const SVG_ERROR   = `<svg class="convert-button__icon-error" viewBox="0 0 24 24"
     });
   }
 
+  // The ▼ chevron button has an SVG icon and no meaningful text.
+  // Content elements (descriptions, labels) have text but no SVG, or are large.
+  function findDropdownArrow(btn) {
+    const isChevron = el => el && el !== btn && !el.contains(btn) &&
+      !!el.querySelector('svg') && el.textContent.trim().length < 5;
+
+    // Check direct siblings of btn
+    for (let s = btn.nextElementSibling; s; s = s.nextElementSibling) {
+      if (isChevron(s)) return s;
+    }
+    // Check other children of btn's parent
+    if (btn.parentElement) {
+      for (const c of btn.parentElement.children) {
+        if (isChevron(c)) return c;
+      }
+      // Check siblings of btn's parent (one level up)
+      for (let s = btn.parentElement.nextElementSibling; s; s = s.nextElementSibling) {
+        if (isChevron(s)) return s;
+        for (const c of s.children) { if (isChevron(c)) return c; }
+      }
+    }
+    return null;
+  }
+
   async function clickNativeDownload() {
     const btn = findButton();
     if (!btn) throw new Error('Primary button not found');
 
-    // Click the dropdown arrow (▼ sibling) to open the menu rather than the main
-    // button area, which triggers bambu-studio:// in some browsers instead of the fetch.
-    const arrow = btn.nextElementSibling || btn.parentElement?.querySelector(':scope > :not(.primaryButton)');
+    const arrow = findDropdownArrow(btn);
     const clickTarget = arrow || btn;
 
     _bypassInterceptor = true;
