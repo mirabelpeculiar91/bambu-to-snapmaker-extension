@@ -1,5 +1,7 @@
 # Bambu to Snapmaker U1 — Chrome Extension
 
+<a href="https://www.buymeacoffee.com/gmeek" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me a Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
 A Chrome extension that adds a **Snapmaker U1** option to MakerWorld's printer filter carousel. Selecting it converts any model's print profile from Bambu Lab format to Snapmaker U1 format and downloads the converted `.3mf` file — without leaving your browser.
 
 ## How it works
