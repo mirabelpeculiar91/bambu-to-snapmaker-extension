@@ -1,13 +1,5 @@
 // MakerWorld → Snapmaker U1 content script
-
-const SETTING_DEFAULTS = {
-  serviceUrl:            'http://localhost:8084',
-  referenceProfile:      '0.20-standard---cube',
-  applyRules:            true,
-  clampSpeeds:           true,
-  preserveColorPainting: true,
-  insertSwapPauses:      false,
-};
+// Conversion is handled entirely in-browser via converter.js + JSZip (no external service needed).
 
 // Inline SVGs — avoids external asset loading, safe under MV3 CSP
 const SVG_READY = `<svg class="convert-button__icon-ready" viewBox="0 0 24 24" focusable="false"><path d="M7 7h10l-2.7-2.7 1.4-1.4L20.8 8l-5.1 5.1-1.4-1.4L17 9H7V7Zm10 10H7l2.7 2.7-1.4 1.4L3.2 16l5.1-5.1 1.4 1.4L7 15h10v2Z" fill="currentColor"/></svg>`;
@@ -203,53 +195,42 @@ const SVG_ERROR   = `<svg class="convert-button__icon-error" viewBox="0 0 24 24"
     setConvertButtonState(btn, 'converting');
 
     try {
-      const cfg    = await new Promise(r => chrome.storage.sync.get(SETTING_DEFAULTS, r));
-      const svcUrl = cfg.serviceUrl.replace(/\/$/, '');
-
-      const health = await fetch(`${svcUrl}/api/health`).catch(() => null);
-      if (!health?.ok) throw new Error(`Converter not running — start it at ${svcUrl}`);
-
+      // 1. Capture the .3mf from MakerWorld
       const blobUrl = await triggerMakerWorldDownload();
 
       const resp = await fetch(blobUrl);
       if (!resp.ok) throw new Error(`Blob fetch failed: ${resp.status}`);
       let buffer = await resp.arrayBuffer();
 
+      // 2. Handle JSON → CDN URL (MakerWorld returns JSON with a CDN link, not raw ZIP)
       let mwName = null;
       const magic = new Uint8Array(buffer, 0, 2);
       if (magic[0] !== 0x50 || magic[1] !== 0x4B) {
-        const text = new TextDecoder().decode(buffer);
-        console.log('[U1 Extension] non-ZIP response, looking for CDN URL:', text.slice(0, 300));
-        const json = JSON.parse(text);
+        const json = JSON.parse(new TextDecoder().decode(buffer));
         mwName = json.name || null;
         const cdnUrl = json.url || json.downloadUrl || json.download_url
                     || json.fileUrl || json.file_url || json.file;
-        if (!cdnUrl) throw new Error('No download URL in response: ' + JSON.stringify(Object.keys(json)));
+        if (!cdnUrl) throw new Error('No download URL in response');
         const cdnResp = await fetch(cdnUrl);
         if (!cdnResp.ok) throw new Error(`CDN fetch failed: ${cdnResp.status}`);
         buffer = await cdnResp.arrayBuffer();
       }
 
+      // 3. Convert entirely in-browser — no external service needed
+      const converted = await convertToU1(buffer);
+
+      // 4. Build a data URL and trigger download via background service worker
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = e => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(new Blob([converted], { type: 'application/octet-stream' }));
+      });
+
       const slug     = location.pathname.match(/\/models\/\d+-(.+)/)?.[1] || 'model';
-      const filename = mwName || (slug.replace(/-/g, '_') + '.3mf');
-      const form     = new FormData();
-      form.append('file',                    new File([buffer], filename, { type: 'application/octet-stream' }));
-      form.append('reference_profile',       cfg.referenceProfile);
-      form.append('apply_rules',             String(cfg.applyRules));
-      form.append('clamp_speeds',            String(cfg.clampSpeeds));
-      form.append('preserve_color_painting', String(cfg.preserveColorPainting));
-      form.append('insert_swap_pauses',      String(cfg.insertSwapPauses));
-
-      const cvResp = await fetch(`${svcUrl}/api/convert`, { method: 'POST', body: form });
-      if (!cvResp.ok) {
-        const msg = await cvResp.text().catch(() => String(cvResp.status));
-        throw new Error(`Converter: ${msg.slice(0, 80)}`);
-      }
-      const { job_id, download_name } = await cvResp.json();
-
       const baseName = (mwName || (slug.replace(/-/g, '_') + '.3mf')).replace(/\.3mf$/i, '');
-      const outName  = download_name || (baseName + '-U1.3mf');
-      chrome.runtime.sendMessage({ type: 'u1_download', url: `${svcUrl}/api/download/${job_id}`, filename: outName });
+      const outName  = baseName + '-U1.3mf';
+      chrome.runtime.sendMessage({ type: 'u1_download', url: dataUrl, filename: outName });
 
       setConvertButtonState(btn, 'success');
       await new Promise(r => setTimeout(r, 1250));

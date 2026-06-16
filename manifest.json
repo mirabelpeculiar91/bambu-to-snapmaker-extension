@@ -4,19 +4,15 @@
   "version": "1.0.0",
   "version_name": "1.0 Beta",
   "description": "Convert MakerWorld print profiles directly to Snapmaker U1 format.",
-  "permissions": ["storage", "downloads"],
-  "options_ui": {
-    "page": "options.html",
-    "open_in_tab": true
-  },
-  "host_permissions": ["https://makerworld.com/*", "http://localhost/*", "http://127.0.0.1/*"],
+  "permissions": ["downloads"],
+  "host_permissions": ["https://makerworld.com/*"],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
       "matches": ["https://makerworld.com/*/models/*"],
-      "js": ["content.js"],
+      "js": ["lib/jszip.min.js", "converter.js", "content.js"],
       "run_at": "document_idle"
     }
   ],
