@@ -52,11 +52,24 @@ docker compose up
 
 The service runs at `http://localhost:8084` by default.
 
+## Browser Compatibility
+
+Tested and working in:
+
+| Browser | Status |
+|---|---|
+| Chrome | ✅ Tested |
+| Microsoft Edge | ✅ Tested |
+| Brave | ✅ Tested |
+| Opera, Vivaldi, Arc | Should work (Chromium-based, untested) |
+| Firefox | ❌ Not supported (different extension format) |
+| Safari | ❌ Not supported |
+
 ## Installation
 
 This extension is not published to the Chrome Web Store. Load it unpacked:
 
-1. Open Chrome and go to `chrome://extensions`
+1. Open your browser's extension page (`chrome://extensions` in Chrome/Brave, `edge://extensions` in Edge)
 2. Enable **Developer mode** (top-right toggle)
 3. Click **Load unpacked**
 4. Select the `bambu-to-snapmaker-extension` folder
