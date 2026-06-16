@@ -337,14 +337,17 @@ const SVG_ERROR   = `<svg class="convert-button__icon-error" viewBox="0 0 24 24"
   }
 
   function findVisibleDownloadItem() {
+    // Match "Download 3MF" only — anchored at start and short, so model descriptions
+    // containing "download" and "3mf" in body text don't produce false positives.
+    const isDownload3mf = t => /^download\s+3mf/i.test(t) && t.length < 30;
     for (const el of document.querySelectorAll('li, [role="menuitem"], [role="option"]')) {
       if (!isVisible(el)) continue;
-      if (/download.*3mf/i.test(el.textContent.trim())) return el;
+      if (isDownload3mf(el.textContent.trim())) return el;
     }
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     let node;
     while ((node = walker.nextNode())) {
-      if (!/download.*3mf/i.test(node.textContent.trim())) continue;
+      if (!isDownload3mf(node.textContent.trim())) continue;
       const p = node.parentElement;
       if (p && isVisible(p)) return p;
     }
