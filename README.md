@@ -4,9 +4,29 @@ A Chrome extension that adds a **Snapmaker U1** option to MakerWorld's printer f
 
 ## How it works
 
-1. On a MakerWorld model page, a **Snapmaker U1** slide appears in the printer filter carousel.
-2. Clicking it changes the primary button to **Convert to Snapmaker U1**.
-3. Clicking the button intercepts MakerWorld's own authenticated download, sends the `.3mf` to a locally-running conversion service, and downloads the converted file.
+The extension injects a **Snapmaker U1** tile into the printer filter carousel on any MakerWorld model page. Clicking it swaps the download button to **Convert to Snapmaker U1**. One more click intercepts MakerWorld's own authenticated download, sends the `.3mf` to a locally-running conversion service, and saves the converted file.
+
+![Printer filter with Snapmaker U1 option and Download 3MF button](screenshots/1.png)
+
+*The injected Snapmaker U1 option appears alongside the standard printer filters.*
+
+---
+
+![Snapmaker U1 selected, Convert to Snapmaker U1 button](screenshots/2.png)
+
+*Selecting Snapmaker U1 changes the button to Convert to Snapmaker U1.*
+
+---
+
+![Converting profile in progress](screenshots/3.png)
+
+*While conversion runs, the button shows a spinner and "Converting profile".*
+
+---
+
+![Save dialog with U1.3mf filename](screenshots/4.png)
+
+*The converted file is named after the original model with a `-U1.3mf` suffix.*
 
 ## Prerequisites
 
@@ -42,11 +62,22 @@ This extension is not published to the Chrome Web Store. Load it unpacked:
 
 ## Settings
 
-Click the extension icon → **Options** to configure:
+Click the extension icon → **Options** to configure the service URL, default print profile, conversion options, and filament rules.
 
-- **Service URL** — change if you're running the service on a different port
-- **Reference profile** — the Snapmaker U1 profile used as the conversion base
-- **Filament rules** — view, edit, enable/disable, or create custom YAML filament mapping rules
+![Extension settings page](screenshots/5.png)
+
+| Setting | Description |
+|---|---|
+| Converter Service | URL of the local conversion service (default: `http://localhost:8084`) |
+| Default Print Profile | Snapmaker U1 reference profile used as the conversion base |
+| Apply filament rules | Apply YAML-defined filament-specific speed and setting overrides |
+| Clamp speeds to U1 limits | Prevent speeds that exceed the U1's hardware limits |
+| Preserve color painting | Keep multi-color painting data from the original file |
+| Insert M600 swap pauses | Add filament-change pauses for multi-color prints |
+
+### Filament rules
+
+The rules list shows all filament-specific tuning profiles included with the conversion service. Each rule can be toggled on or off, expanded to view and edit its YAML directly, or deleted. Custom rules can be added with **+ New Custom Rule**.
 
 ## Button states
 
