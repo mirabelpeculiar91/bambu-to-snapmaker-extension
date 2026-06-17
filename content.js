@@ -335,25 +335,26 @@ const SVG_ERROR   = `<svg class="convert-button__icon-error" viewBox="0 0 24 24"
     _bypassInterceptor = false;
 
     const item = await poll(findVisibleDownloadItem, 5000);
-    if (!item) throw new Error('Download 3MF option not found — select a print profile first');
+    if (!item) throw new Error('Download 3MF option not found — select a print profile and make sure you are logged in to MakerWorld');
     console.log('[U1 Extension] clicking:', item.textContent.trim().slice(0, 40));
     item.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
   }
 
   function findVisibleDownloadItem() {
-    // Match "Download 3MF" only — anchored at start and short, so model descriptions
-    // containing "download" and "3mf" in body text don't produce false positives.
-    const isDownload3mf = t => /^download\s+3mf/i.test(t) && t.length < 30;
-    for (const el of document.querySelectorAll('li, [role="menuitem"], [role="option"]')) {
+    // Match any element whose text contains "3mf" (with optional dot prefix).
+    // Length cap avoids false positives from body copy that mentions .3mf files.
+    // Broader than the original /^download\s+3mf/i to handle text changes and localization.
+    const is3mf = t => /\.?3mf\b/i.test(t) && t.length < 60;
+    for (const el of document.querySelectorAll('li, [role="menuitem"], [role="option"], button, a')) {
       if (!isVisible(el)) continue;
-      if (isDownload3mf(el.textContent.trim())) return el;
+      if (is3mf(el.textContent.trim())) return el;
     }
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     let node;
     while ((node = walker.nextNode())) {
-      if (!isDownload3mf(node.textContent.trim())) continue;
+      if (!is3mf(node.textContent.trim())) continue;
       const p = node.parentElement;
-      if (p && isVisible(p)) return p;
+      if (p && isVisible(p) && p.textContent.trim().length < 60) return p;
     }
     return null;
   }
