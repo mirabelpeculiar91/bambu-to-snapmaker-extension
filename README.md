@@ -8,6 +8,8 @@ A Chrome extension that adds a **Snapmaker U1** option to MakerWorld's printer f
 > Snapmaker. MakerWorld, Bambu Lab, Snapmaker, and related product names and
 > trademarks belong to their respective owners.
 
+<a href="https://www.buymeacoffee.com/gmeek" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me a Coffee" style="height: 30px !important;width: 109px !important;" ></a>
+
 ## How it works
 
 The extension injects a **Snapmaker U1** tile into the printer filter carousel on any MakerWorld model page. Clicking it swaps the download button to **Convert to Snapmaker U1**. One more click intercepts MakerWorld's own authenticated download, converts the `.3mf` in-browser using bundled conversion logic, and saves the result automatically.
