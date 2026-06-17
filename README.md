@@ -6,7 +6,7 @@ A Chrome extension that adds a **Snapmaker U1** option to MakerWorld's printer f
 
 ## How it works
 
-The extension injects a **Snapmaker U1** tile into the printer filter carousel on any MakerWorld model page. Clicking it swaps the download button to **Convert to Snapmaker U1**. One more click intercepts MakerWorld's own authenticated download, sends the `.3mf` to a locally-running conversion service, and saves the converted file.
+The extension injects a **Snapmaker U1** tile into the printer filter carousel on any MakerWorld model page. Clicking it swaps the download button to **Convert to Snapmaker U1**. One more click intercepts MakerWorld's own authenticated download, converts the `.3mf` entirely in-browser, and saves the converted file — no external service or Docker container required.
 
 ![Printer filter with Snapmaker U1 option and Download 3MF button](screenshots/1.png)
 
@@ -40,17 +40,9 @@ This is the browser asking permission for MakerWorld to open Bambu Studio via it
 
 ## Prerequisites
 
-**The local conversion service must be running before you click Convert.**
+No external software required. The extension converts `.3mf` files entirely in your browser using bundled conversion logic.
 
-Clone and start [bambu-to-snapmaker-u1](https://github.com/thadius83/bambu-to-snapmaker-u1) via Docker Compose:
-
-```bash
-git clone https://github.com/thadius83/bambu-to-snapmaker-u1.git
-cd bambu-to-snapmaker-u1
-docker compose up
-```
-
-The service runs at `http://localhost:8084` by default.
+You must be **logged in to MakerWorld** for the download interception to work.
 
 ## Browser Compatibility
 
@@ -76,31 +68,29 @@ This extension is not published to the Chrome Web Store. Load it unpacked:
 
 ## Usage
 
-1. Make sure the conversion service is running (`http://localhost:8084`)
-2. Go to a MakerWorld model page, e.g. `https://makerworld.com/en/models/...`
-3. Select a print profile from the profile list on the page
-4. Click **Snapmaker U1** in the printer filter carousel
-5. Click **Convert to Snapmaker U1**
-6. The converted `.3mf` will download automatically
+1. Go to a MakerWorld model page, e.g. `https://makerworld.com/en/models/...`
+2. Select a print profile from the profile list on the page
+3. Click **Snapmaker U1** in the printer filter carousel
+4. Click **Convert to Snapmaker U1**
+5. The converted `.3mf` will download automatically
 
 ## Settings
 
-Click the extension icon → **Options** to configure the service URL, default print profile, conversion options, and filament rules.
+Click the extension icon → **Options** to configure conversion behavior.
 
 ![Extension settings page](screenshots/5.png)
 
 | Setting | Description |
 |---|---|
-| Converter Service | URL of the local conversion service (default: `http://localhost:8084`) |
-| Default Print Profile | Snapmaker U1 reference profile used as the conversion base |
-| Apply filament rules | Apply YAML-defined filament-specific speed and setting overrides |
-| Clamp speeds to U1 limits | Prevent speeds that exceed the U1's hardware limits |
+| Conversion Template | U1 template used as the conversion base — Auto-detect picks Supports when the original model has supports enabled |
+| Apply filament type mappings | Map Bambu filament types (PLA, PETG, ABS, TPU) to the correct Snapmaker profile names |
+| Clamp speeds to U1 limits | Ensure output speeds stay within U1 hardware limits |
 | Preserve color painting | Keep multi-color painting data from the original file |
-| Insert M600 swap pauses | Add filament-change pauses for multi-color prints |
+| Insert M600 swap pauses | Add filament-change pauses for multi-color prints (coming soon) |
 
-### Filament rules
+### Filament Type Mappings
 
-The rules list shows all filament-specific tuning profiles included with the conversion service. Each rule can be toggled on or off, expanded to view and edit its YAML directly, or deleted. Custom rules can be added with **+ New Custom Rule**.
+The mappings table shows how each Bambu filament type is translated to a Snapmaker profile name. Matching is by substring (e.g. "PLA" matches "PLA-CF"). You can add, edit, or remove rows, and reset to the bundled defaults at any time.
 
 ## Button states
 
@@ -116,10 +106,11 @@ The rules list shows all filament-specific tuning profiles included with the con
 - You must be **logged in to MakerWorld** for the download interception to work.
 - Select a **print profile** on the model page before clicking Convert — the button needs an active profile to trigger the download.
 - The extension intercepts MakerWorld's own authenticated fetch rather than making its own request, so no credentials are stored or transmitted by the extension.
+- Conversion runs entirely in your browser — no Docker, no local service, no external dependencies.
 
 ## Credits and Attribution
 
-The conversion service this extension depends on is [bambu-to-snapmaker-u1](https://github.com/thadius83/bambu-to-snapmaker-u1) by thadius83, licensed under [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).
+The conversion logic in this extension is ported from [bambu-to-snapmaker-u1](https://github.com/thadius83/bambu-to-snapmaker-u1) by thadius83, licensed under [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).
 
 > **Required Notice: Copyright thadius83 (https://github.com/thadius83)**
 
@@ -127,4 +118,4 @@ The conversion service this extension depends on is [bambu-to-snapmaker-u1](http
 
 The extension code in this repository is licensed under the MIT License — see [LICENSE](LICENSE).
 
-**Note:** Because this extension depends on `bambu-to-snapmaker-u1`, the combined workflow is subject to the PolyForm Noncommercial 1.0.0 license terms of that project. **Non-commercial use only.** Commercial use requires a separate license from thadius83.
+**Note:** The conversion logic is ported from `bambu-to-snapmaker-u1`, so the combined work is subject to the PolyForm Noncommercial 1.0.0 license terms of that project. **Non-commercial use only.** Commercial use requires a separate license from thadius83.

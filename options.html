@@ -5,107 +5,78 @@
 <title>Bambu → Snapmaker U1 — Settings</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, sans-serif; font-size: 14px; background: #1a1a1a; color: #e0e0e0; padding: 24px; }
+  body { font-family: system-ui, sans-serif; font-size: 14px; background: #1a1a1a; color: #e0e0e0; padding: 24px; max-width: 720px; }
   h1 { font-size: 18px; font-weight: 600; margin-bottom: 24px; color: #fff; }
   h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #888; margin-bottom: 12px; }
   section { background: #252525; border-radius: 8px; padding: 18px 20px; margin-bottom: 16px; }
   label { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; }
   label span { color: #ccc; }
-  input[type=text], select, textarea {
+  input[type=text], select {
     background: #333; border: 1px solid #444; color: #e0e0e0; border-radius: 5px;
     padding: 6px 10px; font-size: 13px; font-family: inherit; width: 100%;
   }
-  input[type=text]:focus, select:focus, textarea:focus {
-    outline: none; border-color: #4a9eff;
-  }
-  textarea { resize: vertical; font-family: 'Consolas', 'Courier New', monospace; font-size: 12px; }
+  input[type=text]:focus, select:focus { outline: none; border-color: #4a9eff; }
   input[type=checkbox] { width: 15px; height: 15px; accent-color: #4a9eff; cursor: pointer; }
-  .row { display: flex; gap: 10px; align-items: center; }
-  .row input[type=text] { flex: 1; }
-  .badge { font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
-  .badge.ok  { background: #1a4a1a; color: #4caf50; }
-  .badge.err { background: #4a1a1a; color: #f44336; }
   button {
     padding: 6px 14px; border-radius: 5px; border: none; cursor: pointer;
     font-size: 13px; font-family: inherit;
   }
   .btn-primary { background: #4a9eff; color: #fff; }
   .btn-primary:hover { background: #3a8ef0; }
-  .btn-danger  { background: #c0392b; color: #fff; }
+  .btn-danger  { background: #c0392b; color: #fff; padding: 3px 8px; font-size: 12px; }
   .btn-danger:hover  { background: #a93226; }
   .btn-ghost   { background: #333; color: #ccc; border: 1px solid #444; }
   .btn-ghost:hover  { background: #3a3a3a; }
   .save-row { margin-top: 8px; display: flex; align-items: center; gap: 12px; }
   #saveStatus { font-size: 12px; color: #4caf50; }
+  .hint { margin-top: 8px; color: #888; font-size: 12px; line-height: 1.5; }
 
-  /* Rules list */
-  .rule-item { border: 1px solid #383838; border-radius: 6px; margin-bottom: 8px; overflow: hidden; }
-  .rule-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #2d2d2d; cursor: pointer; }
-  .rule-header:hover { background: #333; }
-  .rule-name { flex: 1; font-weight: 500; }
-  .rule-desc { font-size: 12px; color: #888; flex: 2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .rule-toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
-  .rule-toggle input { opacity: 0; width: 0; height: 0; }
-  .rule-toggle-track {
-    position: absolute; inset: 0; background: #555; border-radius: 10px; cursor: pointer; transition: .2s;
-  }
-  .rule-toggle input:checked + .rule-toggle-track { background: #4a9eff; }
-  .rule-toggle-track::after {
-    content: ''; position: absolute; left: 3px; top: 3px;
-    width: 14px; height: 14px; background: #fff; border-radius: 50%; transition: .2s;
-  }
-  .rule-toggle input:checked + .rule-toggle-track::after { transform: translateX(16px); }
-  .rule-body { display: none; padding: 12px 14px; background: #222; border-top: 1px solid #383838; }
-  .rule-body.open { display: block; }
-  .rule-actions { display: flex; gap: 8px; margin-top: 10px; }
-  .new-rule-form { border: 1px dashed #444; border-radius: 6px; padding: 14px; margin-top: 10px; }
-  .field-label { font-size: 12px; color: #888; margin-bottom: 4px; margin-top: 10px; }
-  .field-label:first-child { margin-top: 0; }
-  #rulesLoading, #profilesLoading { color: #888; font-size: 13px; }
+  /* Mapping table */
+  #mappingTable { width: 100%; border-collapse: collapse; }
+  #mappingTable th { text-align: left; padding: 6px 4px; color: #888; font-size: 12px; font-weight: 600; }
+  #mappingTable td { padding: 4px; }
+  #mappingTable input[type=text] { padding: 5px 8px; }
+  .map-actions { margin-top: 10px; display: flex; gap: 8px; }
+  .label-disabled { color: #666 !important; }
 </style>
 </head>
 <body>
 <h1>Bambu → Snapmaker U1 Settings</h1>
 
 <section>
-  <h2>Converter Service</h2>
-  <div class="row">
-    <input type="text" id="serviceUrl" placeholder="http://localhost:8084">
-    <button class="btn-ghost" id="checkHealth">Check</button>
-    <span id="healthBadge"></span>
-  </div>
-</section>
-
-<section>
-  <h2>Default Print Profile</h2>
-  <div id="profilesLoading">Loading profiles…</div>
-  <select id="profileSelect" style="display:none"></select>
-  <p style="margin-top:8px;color:#888;font-size:12px">Layer height &amp; quality used when converting. Higher detail = longer print.</p>
+  <h2>Conversion Template</h2>
+  <select id="templateMode">
+    <option value="auto">Auto-detect (recommended)</option>
+    <option value="standard">Standard — 0.20mm layer height</option>
+    <option value="supports">Standard with Supports — 0.20mm layer height</option>
+  </select>
+  <p class="hint">Auto-detect selects the Supports template when the original model has support structures enabled, Standard otherwise.</p>
 </section>
 
 <section>
   <h2>Conversion Options</h2>
-  <label><input type="checkbox" id="applyRules"> <span>Apply filament rules</span></label>
+  <label><input type="checkbox" id="applyRules"> <span>Apply filament type mappings</span></label>
   <label><input type="checkbox" id="clampSpeeds"> <span>Clamp speeds to U1 limits</span></label>
   <label><input type="checkbox" id="preserveColorPainting"> <span>Preserve color painting</span></label>
-  <label><input type="checkbox" id="insertSwapPauses"> <span>Insert M600 swap pauses for multi-color prints</span></label>
+  <label><input type="checkbox" id="insertSwapPauses"> <span class="label-disabled">Insert M600 swap pauses for multi-color prints (coming soon)</span></label>
 </section>
 
 <section>
-  <h2>Filament Rules</h2>
-  <p style="color:#888;font-size:12px;margin-bottom:12px">Rules apply filament-specific overrides during conversion. Requires <em>Apply filament rules</em> to be enabled above.</p>
-  <div id="rulesLoading">Loading rules…</div>
-  <div id="rulesList"></div>
-  <button class="btn-ghost" id="addRuleBtn" style="margin-top:10px;display:none">+ New Custom Rule</button>
-  <div id="newRuleForm" class="new-rule-form" style="display:none">
-    <div class="field-label">Rule name (no spaces)</div>
-    <input type="text" id="newRuleName" placeholder="my_custom_rule">
-    <div class="field-label">YAML content</div>
-    <textarea id="newRuleYaml" rows="12" placeholder="name: my_custom_rule&#10;description: My rule&#10;enabled: true&#10;priority: 50&#10;match:&#10;  filament_type: [PLA]&#10;overrides:&#10;  filament_max_volumetric_speed: [&quot;12&quot;]"></textarea>
-    <div class="rule-actions">
-      <button class="btn-primary" id="saveNewRule">Save Rule</button>
-      <button class="btn-ghost"  id="cancelNewRule">Cancel</button>
-    </div>
+  <h2>Filament Type Mappings</h2>
+  <p class="hint" style="margin-bottom:12px">Maps Bambu filament types to Snapmaker profile names. Applies when <em>Apply filament type mappings</em> is enabled above. Partial keys are matched by substring (e.g. "PLA" matches "PLA-CF").</p>
+  <table id="mappingTable">
+    <thead>
+      <tr>
+        <th style="width:35%">Bambu Filament Type</th>
+        <th>Snapmaker Profile Name</th>
+        <th style="width:36px"></th>
+      </tr>
+    </thead>
+    <tbody id="mappingBody"></tbody>
+  </table>
+  <div class="map-actions">
+    <button class="btn-ghost" id="addMappingBtn">+ Add Row</button>
+    <button class="btn-ghost" id="resetMappingsBtn">Reset to Defaults</button>
   </div>
 </section>
 

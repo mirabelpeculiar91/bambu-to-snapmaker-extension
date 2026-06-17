@@ -64,7 +64,16 @@ function padArray(arr, length, fillValue) {
   return out;
 }
 
-async function convertToU1(inputBuffer) {
+async function convertToU1(inputBuffer, opts = {}) {
+  const {
+    templateMode          = 'auto',
+    applyRules            = true,
+    clampSpeeds           = true,   // always effective — output starts from U1 template
+    preserveColorPainting = true,   // always effective — non-config files are copied as-is
+    insertSwapPauses      = false,  // not yet implemented
+    filamentMap           = null,
+  } = opts;
+
   const zip = await JSZip.loadAsync(inputBuffer);
 
   // ── 1. Read original project_settings to detect support template ──────────
@@ -74,11 +83,24 @@ async function convertToU1(inputBuffer) {
   const hasSupport      = diff.some(s => typeof s === 'string' && s.includes('enable_support'));
 
   // ── 2. Load U1 template + filament profile map ────────────────────────────
-  const templateFile = hasSupport ? 'assets/u1_template_supports.json' : 'assets/u1_template.json';
-  const [u1Settings, profileMap] = await Promise.all([
-    fetch(chrome.runtime.getURL(templateFile)).then(r => r.json()),
-    fetch(chrome.runtime.getURL('assets/filament_profiles.json')).then(r => r.json()),
-  ]);
+  let useSupports;
+  if (templateMode === 'supports')     useSupports = true;
+  else if (templateMode === 'standard') useSupports = false;
+  else                                  useSupports = hasSupport; // 'auto'
+
+  const templateFile = useSupports ? 'assets/u1_template_supports.json' : 'assets/u1_template.json';
+
+  // Use caller-supplied filament map or fall back to bundled defaults
+  let profileMap;
+  if (applyRules && filamentMap && Object.keys(filamentMap).length > 0) {
+    profileMap = filamentMap;
+  } else if (applyRules) {
+    profileMap = await fetch(chrome.runtime.getURL('assets/filament_profiles.json')).then(r => r.json());
+  } else {
+    profileMap = {}; // disabled — mapFilamentType() will return DEFAULT_PROFILE for all types
+  }
+
+  const u1Settings = await fetch(chrome.runtime.getURL(templateFile)).then(r => r.json());
 
   // ── 3. Parse source filaments ─────────────────────────────────────────────
   let filaments = [];

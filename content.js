@@ -8,6 +8,17 @@ const SVG_SUCCESS = `<svg class="convert-button__icon-success" viewBox="0 0 24 2
 const SVG_ERROR   = `<svg class="convert-button__icon-error" viewBox="0 0 24 24" focusable="false"><path d="M12 2 1 21h22L12 2Zm0 5 6.1 12H5.9L12 7Zm-1 3v5h2v-5h-2Zm0 6.5v2h2v-2h-2Z" fill="currentColor"/></svg>`;
 
 (() => {
+  const SETTING_DEFAULTS = {
+    templateMode:          'auto',
+    applyRules:            true,
+    clampSpeeds:           true,
+    preserveColorPainting: true,
+    insertSwapPauses:      false,
+    filamentMap:           null,
+  };
+  let settings = { ...SETTING_DEFAULTS };
+  chrome.storage.sync.get(SETTING_DEFAULTS, (s) => { settings = s; });
+
   let u1ModeActive       = false;
   let injectedSlide      = null;
   let isInjecting        = false;
@@ -217,7 +228,7 @@ const SVG_ERROR   = `<svg class="convert-button__icon-error" viewBox="0 0 24 24"
       }
 
       // 3. Convert entirely in-browser — no external service needed
-      const converted = await convertToU1(buffer);
+      const converted = await convertToU1(buffer, settings);
 
       // 4. Build a data URL and trigger download via background service worker
       const dataUrl = await new Promise((resolve, reject) => {
