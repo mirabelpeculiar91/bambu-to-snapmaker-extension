@@ -90,7 +90,9 @@ This extension is not published to the Chrome Web Store. Load it unpacked:
 
 Click the extension icon → **Options** to configure conversion behavior.
 
-![Extension settings page](screenshots/5.png)
+![Extension settings page showing Default Print Profile, Conversion Options, and Filament Rules](screenshots/5.png)
+
+*The settings page: Default Print Profile dropdown, Conversion Options checkboxes, Filament Rules with per-rule toggle switches, and Filament Type Mappings table.*
 
 | Setting | Description |
 |---|---|
