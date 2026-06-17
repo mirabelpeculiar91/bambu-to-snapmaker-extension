@@ -9,15 +9,13 @@ const SVG_ERROR   = `<svg class="convert-button__icon-error" viewBox="0 0 24 24"
 
 (() => {
   const SETTING_DEFAULTS = {
-    templateMode:          'auto',
+    profileId:             '0.20mm-standard',
     applyRules:            true,
     clampSpeeds:           true,
     preserveColorPainting: true,
     insertSwapPauses:      false,
     filamentMap:           null,
   };
-  let settings = { ...SETTING_DEFAULTS };
-  chrome.storage.sync.get(SETTING_DEFAULTS, (s) => { settings = s; });
 
   let u1ModeActive       = false;
   let injectedSlide      = null;
@@ -227,8 +225,22 @@ const SVG_ERROR   = `<svg class="convert-button__icon-error" viewBox="0 0 24 24"
         buffer = await cdnResp.arrayBuffer();
       }
 
-      // 3. Convert entirely in-browser — no external service needed
-      const converted = await convertToU1(buffer, settings);
+      // 3. Load current settings + filament rules, then convert in-browser
+      const [currentSettings, ruleEnabledState] = await Promise.all([
+        new Promise(resolve => chrome.storage.sync.get(SETTING_DEFAULTS, resolve)),
+        new Promise(resolve => chrome.storage.sync.get({ ruleEnabled: {} }, s => resolve(s.ruleEnabled || {}))),
+      ]);
+
+      let activeRules = [];
+      if (currentSettings.applyRules) {
+        const bundledRules = await fetch(chrome.runtime.getURL('assets/rules.json')).then(r => r.json());
+        activeRules = bundledRules.map(r => ({
+          ...r,
+          enabled: r.name in ruleEnabledState ? ruleEnabledState[r.name] : r.enabled,
+        }));
+      }
+
+      const converted = await convertToU1(buffer, { ...currentSettings, rules: activeRules });
 
       // 4. Build a data URL and trigger download via background service worker
       const dataUrl = await new Promise((resolve, reject) => {

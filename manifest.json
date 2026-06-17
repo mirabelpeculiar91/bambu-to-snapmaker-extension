@@ -22,7 +22,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["assets/*", "injected.js"],
+      "resources": ["assets/*", "assets/profiles/*", "injected.js"],
       "matches": ["https://makerworld.com/*"]
     }
   ]

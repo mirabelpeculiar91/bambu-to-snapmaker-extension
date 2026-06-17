@@ -21,7 +21,6 @@ function mapFilamentType(type, profileMap) {
   if (!type) return DEFAULT_PROFILE;
   const up = type.toUpperCase();
   for (const [k, v] of Object.entries(profileMap)) {
-    // Fuzzy match: "PETG" matches "PETG-HF", etc.
     const key = k.toUpperCase().replace(/-HF$/, '').replace(/-/g, '');
     const src = up.replace(/-HF$/, '').replace(/-/g, '');
     if (src.includes(key) || key.includes(src)) return v;
@@ -64,43 +63,86 @@ function padArray(arr, length, fillValue) {
   return out;
 }
 
+// Apply enabled filament rules whose match conditions are satisfied by
+// any slot in the source file. Lower priority fires first; higher wins
+// on conflicting keys. Numeric override values are coerced to strings
+// (Orca stores all settings as JSON strings).
+function applyFilamentRules(combined, rules, origSettings) {
+  const {
+    filament_settings_id: sids = [],
+    filament_vendor:      vens = [],
+    filament_type:        typs = [],
+  } = origSettings;
+  const n = Math.max(sids.length, vens.length, typs.length);
+
+  const sorted = [...rules]
+    .filter(r => r.enabled)
+    .sort((a, b) => (a.priority || 0) - (b.priority || 0));
+
+  for (const rule of sorted) {
+    const m = rule.match || {};
+    const needle = (m.filament_settings_id_contains || '').toLowerCase();
+
+    // Check filament-scoped conditions: a rule matches if ANY slot satisfies
+    // all specified conditions simultaneously.
+    if (needle || m.filament_vendor || m.filament_type) {
+      let matched = false;
+      for (let i = 0; i < n; i++) {
+        const sid = (sids[i] || '').toLowerCase();
+        const ven = vens[i] || '';
+        const typ = typs[i] || '';
+        if (needle && !sid.includes(needle)) continue;
+        if (m.filament_vendor && ven !== m.filament_vendor) continue;
+        if (m.filament_type   && typ !== m.filament_type)   continue;
+        matched = true;
+        break;
+      }
+      if (!matched) continue;
+    }
+
+    for (const [k, v] of Object.entries(rule.overrides || {})) {
+      combined[k] = (typeof v === 'number') ? String(v) : v;
+    }
+  }
+}
+
 async function convertToU1(inputBuffer, opts = {}) {
   const {
-    templateMode          = 'auto',
+    profileId             = '0.20mm-standard',
     applyRules            = true,
-    clampSpeeds           = true,   // always effective — output starts from U1 template
+    clampSpeeds           = true,   // always effective — output starts from U1 profile
     preserveColorPainting = true,   // always effective — non-config files are copied as-is
     insertSwapPauses      = false,  // not yet implemented
     filamentMap           = null,
+    rules                 = [],
   } = opts;
 
   const zip = await JSZip.loadAsync(inputBuffer);
 
-  // ── 1. Read original project_settings to detect support template ──────────
+  // ── 1. Read source project_settings — needed for filament data + supports detection
   const origSettingsStr = await zip.file('Metadata/project_settings.config').async('string');
   const origSettings    = JSON.parse(origSettingsStr);
   const diff            = origSettings.different_settings_to_system || [];
   const hasSupport      = diff.some(s => typeof s === 'string' && s.includes('enable_support'));
 
-  // ── 2. Load U1 template + filament profile map ────────────────────────────
-  let useSupports;
-  if (templateMode === 'supports')     useSupports = true;
-  else if (templateMode === 'standard') useSupports = false;
-  else                                  useSupports = hasSupport; // 'auto'
-
-  const templateFile = useSupports ? 'assets/u1_template_supports.json' : 'assets/u1_template.json';
-
-  // Use caller-supplied filament map or fall back to bundled defaults
-  let profileMap;
-  if (applyRules && filamentMap && Object.keys(filamentMap).length > 0) {
-    profileMap = filamentMap;
-  } else if (applyRules) {
-    profileMap = await fetch(chrome.runtime.getURL('assets/filament_profiles.json')).then(r => r.json());
-  } else {
-    profileMap = {}; // disabled — mapFilamentType() will return DEFAULT_PROFILE for all types
+  // ── 2. Load U1 reference profile + filament type map ─────────────────────
+  // Try the selected profile first; fall back to the default 0.20mm standard template.
+  let u1Settings;
+  try {
+    u1Settings = await fetch(chrome.runtime.getURL(`assets/profiles/${profileId}.json`)).then(r => {
+      if (!r.ok) throw new Error(r.status);
+      return r.json();
+    });
+  } catch {
+    u1Settings = await fetch(chrome.runtime.getURL('assets/u1_template.json')).then(r => r.json());
   }
 
-  const u1Settings = await fetch(chrome.runtime.getURL(templateFile)).then(r => r.json());
+  // Enable supports when the source had them (the selected profile has supports off by default).
+  if (hasSupport) u1Settings = { ...u1Settings, enable_support: '1' };
+
+  const profileMap = (filamentMap && Object.keys(filamentMap).length > 0)
+    ? filamentMap
+    : await fetch(chrome.runtime.getURL('assets/filament_profiles.json')).then(r => r.json());
 
   // ── 3. Parse source filaments ─────────────────────────────────────────────
   let filaments = [];
@@ -112,19 +154,16 @@ async function convertToU1(inputBuffer, opts = {}) {
   if (!filaments.length) {
     filaments = parseFilamentsFromProjectSettings(origSettingsStr);
   }
-
-  // Cap at TARGET_FILAMENTS
   filaments = filaments.slice(0, TARGET_FILAMENTS);
 
-  // ── 4. Build new color/type/settings_id arrays ────────────────────────────
+  // ── 4. Build new filament arrays ──────────────────────────────────────────
   const newColors = filaments.map(f => ensureRGBA(f.color));
   const newTypes  = filaments.map(f => f.type);
   const newIds    = newTypes.map(t => mapFilamentType(t, profileMap));
 
-  // Pad to 4
-  while (newColors.length < TARGET_FILAMENTS) { newColors.push('#FFFFFFFF'); }
-  while (newTypes.length  < TARGET_FILAMENTS) { newTypes.push('PLA'); }
-  while (newIds.length    < TARGET_FILAMENTS) { newIds.push(DEFAULT_PROFILE); }
+  while (newColors.length < TARGET_FILAMENTS) newColors.push('#FFFFFFFF');
+  while (newTypes.length  < TARGET_FILAMENTS) newTypes.push('PLA');
+  while (newIds.length    < TARGET_FILAMENTS) newIds.push(DEFAULT_PROFILE);
 
   // ── 5. Build combined project_settings ───────────────────────────────────
   const combined = { ...u1Settings };
@@ -132,25 +171,28 @@ async function convertToU1(inputBuffer, opts = {}) {
   combined.filament_type        = newTypes;
   combined.filament_settings_id = newIds;
 
-  // Normalize all filament_* list keys to TARGET_FILAMENTS length
+  // Normalize all filament_* arrays to TARGET_FILAMENTS length
   for (const [key, val] of Object.entries(combined)) {
     if (key.startsWith('filament_') && Array.isArray(val) && val.length > 0 && val.length !== TARGET_FILAMENTS) {
       combined[key] = padArray(val, TARGET_FILAMENTS, val[val.length - 1]);
     }
   }
 
+  // ── 6. Apply filament rules (speed/setting overrides) ────────────────────
+  if (applyRules && rules.length > 0) {
+    applyFilamentRules(combined, rules, origSettings);
+  }
+
   const combinedBytes = JSON.stringify(combined, null, 4);
 
-  // ── 6. Build id_mapping for slice_info remapping ──────────────────────────
+  // ── 7. Build id_mapping for slice_info remapping ──────────────────────────
   const idMapping = {};
   filaments.forEach((f, i) => { idMapping[f.id] = String(i + 1); });
 
-  // ── 7. Modify slice_info.config ───────────────────────────────────────────
+  // ── 8. Modify slice_info.config ───────────────────────────────────────────
   let modifiedSliceInfo = null;
   if (sliceEntry) {
     let sliceXml = await sliceEntry.async('string');
-
-    // Replace printer_model_id
     sliceXml = sliceXml.replace(
       /key="printer_model_id"\s+value="[^"]*"/g,
       'key="printer_model_id" value="Snapmaker U1"'
@@ -159,7 +201,6 @@ async function convertToU1(inputBuffer, opts = {}) {
     const doc = parseXml(sliceXml);
     const parent = doc.querySelector('plate') || doc.documentElement;
 
-    // Remap existing filament nodes
     let counter = 1;
     const existingNodes = Array.from(parent.querySelectorAll('filament'));
     existingNodes.forEach(node => {
@@ -174,7 +215,6 @@ async function convertToU1(inputBuffer, opts = {}) {
       }
     });
 
-    // Pad with dummy white-PLA nodes
     while (counter <= TARGET_FILAMENTS) {
       const dummy = doc.createElement('filament');
       dummy.setAttribute('id',     String(counter));
@@ -189,7 +229,7 @@ async function convertToU1(inputBuffer, opts = {}) {
     modifiedSliceInfo = serializeXml(doc);
   }
 
-  // ── 8. Modify model_settings.config ──────────────────────────────────────
+  // ── 9. Modify model_settings.config ──────────────────────────────────────
   let modifiedModelSettings = null;
   const modelEntry = zip.file('Metadata/model_settings.config');
   if (modelEntry) {
@@ -204,18 +244,12 @@ async function convertToU1(inputBuffer, opts = {}) {
     modifiedModelSettings = serializeXml(doc);
   }
 
-  // ── 9. Write output ZIP ───────────────────────────────────────────────────
+  // ── 10. Write output ZIP ──────────────────────────────────────────────────
   const outZip = new JSZip();
-  const files   = Object.keys(zip.files);
-
-  for (const name of files) {
+  for (const name of Object.keys(zip.files)) {
     const entry = zip.file(name);
-    if (!entry || entry.dir) {
-      if (entry && entry.dir) outZip.folder(name);
-      continue;
-    }
+    if (!entry || entry.dir) { if (entry?.dir) outZip.folder(name); continue; }
 
-    // Zip-slip defence: skip absolute or traversal paths
     const safe = name.replace(/\\/g, '/').replace(/^\/+/, '');
     if (safe.startsWith('..') || safe.includes('/../')) continue;
 
@@ -226,8 +260,7 @@ async function convertToU1(inputBuffer, opts = {}) {
     } else if (name === 'Metadata/model_settings.config' && modifiedModelSettings) {
       outZip.file(name, modifiedModelSettings);
     } else {
-      const data = await entry.async('uint8array');
-      outZip.file(name, data);
+      outZip.file(name, await entry.async('uint8array'));
     }
   }
 
